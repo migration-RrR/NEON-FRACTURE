@@ -1,0 +1,298 @@
+/* ── Base ── */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: black;
+  font-family: 'Courier New', monospace;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+canvas {
+  display: block;
+  image-rendering: crisp-edges;
+}
+
+/* ── Start Screen ── */
+#startScreen {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(circle, #0f0f0f 0%, #000 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 100;
+}
+#startScreen h1 {
+  color: #39FF14;
+  letter-spacing: 10px;
+  text-shadow: 0 0 20px #39FF14, 0 0 40px #00aaff;
+  margin-bottom: 30px;
+  font-size: clamp(28px, 6vw, 52px);
+  animation: titlePulse 2s infinite;
+}
+@keyframes titlePulse {
+  0%   { text-shadow: 0 0 20px #39FF14; }
+  50%  { text-shadow: 0 0 40px #39FF14, 0 0 60px #00aaff; }
+  100% { text-shadow: 0 0 20px #39FF14; }
+}
+.btn {
+  color: #DF2531;
+  font-size: clamp(16px, 3vw, 24px);
+  border: 2px solid #DF2531;
+  padding: 14px 36px;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  background: rgba(223, 37, 49, 0.1);
+  transition: 0.3s;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(223, 37, 49, 0.4);
+  margin: 10px;
+  backdrop-filter: blur(2px);
+}
+.btn:hover, .btn:active {
+  background: #DF2531;
+  color: #000;
+  box-shadow: 0 0 30px #DF2531;
+  transform: scale(1.05);
+}
+
+/* ── Platform Select Screen ── */
+#platformScreen {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(10px);
+  display: none;                /* показывается JS-ом */
+  justify-content: center;
+  align-items: center;
+  z-index: 150;
+  animation: fadeIn 0.3s ease;
+}
+.platform-card {
+  background: #0a0a12;
+  border: 2px solid #00aaff;
+  border-radius: 12px;
+  padding: 40px 50px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(0,170,255,0.4), inset 0 0 20px rgba(0,170,255,0.05);
+}
+.platform-title {
+  color: #00aaff;
+  font-size: clamp(20px, 4vw, 28px);
+  letter-spacing: 6px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.platform-sub {
+  color: #555;
+  font-size: 13px;
+  letter-spacing: 2px;
+  margin-bottom: 36px;
+}
+.platform-options {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.platform-btn {
+  width: 140px;
+  padding: 22px 16px;
+  border: 2px solid #39FF14;
+  border-radius: 10px;
+  cursor: pointer;
+  background: rgba(57, 255, 20, 0.05);
+  transition: 0.25s;
+  box-shadow: 0 0 12px rgba(57,255,20,0.2);
+}
+.platform-btn:hover, .platform-btn:active {
+  background: rgba(57, 255, 20, 0.18);
+  box-shadow: 0 0 28px #39FF14;
+  transform: scale(1.06);
+}
+.platform-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+.platform-label {
+  color: #39FF14;
+  font-size: 18px;
+  letter-spacing: 4px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+.platform-hint {
+  color: #4a7a4a;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+/* ── Intro Text ── */
+#introText {
+  position: absolute;
+  width: 100%;
+  top: 45%;
+  text-align: center;
+  color: #39FF14;
+  font-size: clamp(16px, 3vw, 22px);
+  pointer-events: none;
+  text-shadow: 0 0 10px #39FF14, 0 0 20px #00aaff;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.glitch-text {
+  animation: glitch-anim 2s infinite linear alternate-reverse;
+}
+@keyframes glitch-anim {
+  0%   { transform: translate(0); opacity: 1; }
+  20%  { transform: translate(-2px, 2px); text-shadow: 2px 0 #DF2531, -2px 0 #00aaff; }
+  40%  { transform: translate(-2px, -2px); }
+  60%  { transform: translate(2px, 2px); }
+  80%  { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+/* ── Pause Menu ── */
+#pauseMenu {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 200;
+}
+.pause-card {
+  background: #0f0f0f;
+  border: 2px solid #39FF14;
+  border-radius: 10px;
+  padding: 30px 50px;
+  text-align: center;
+  box-shadow: 0 0 30px #39FF14, inset 0 0 10px rgba(57,255,20,0.3);
+  animation: fadeIn 0.3s ease;
+}
+.pause-card h2 {
+  color: #39FF14;
+  margin-top: 0; margin-bottom: 25px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-size: clamp(20px, 4vw, 28px);
+}
+.pause-card button {
+  display: block;
+  width: 200px;
+  margin: 12px auto;
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid #39FF14;
+  color: #39FF14;
+  font-family: 'Courier New', monospace;
+  font-size: clamp(14px, 2.5vw, 18px);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.pause-card button:hover, .pause-card button:active {
+  background: #39FF14; color: #000;
+  box-shadow: 0 0 15px #39FF14;
+  transform: scale(1.02);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Settings Modal ── */
+#settingsModal {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 300;
+}
+.settings-card {
+  background: #0f0f0f;
+  border: 2px solid #39FF14;
+  border-radius: 10px;
+  padding: 30px;
+  width: min(300px, 90vw);
+  text-align: center;
+  box-shadow: 0 0 30px #39FF14;
+}
+.settings-card h3 { color: #39FF14; margin-top: 0; }
+.settings-card label { color: #39FF14; display: block; margin: 15px 0 5px; }
+.settings-card input[type="range"] {
+  width: 100%; background: #202020;
+  border: 1px solid #39FF14; color: white;
+  padding: 5px; accent-color: #39FF14;
+}
+.settings-card input[type="checkbox"] {
+  accent-color: #39FF14; width: 18px; height: 18px; cursor: pointer;
+}
+.settings-card button {
+  margin-top: 20px; background: #39FF14; color: black; border: none;
+  padding: 8px 20px; cursor: pointer;
+  font-family: 'Courier New', monospace; font-size: 14px;
+  font-weight: bold; letter-spacing: 2px;
+}
+
+/* ── Mobile Virtual Buttons ── */
+.mob-btn {
+  position: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  font-family: 'Courier New', monospace;
+  font-size: 22px;
+  font-weight: bold;
+  color: rgba(255,255,255,0.7);
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid rgba(57, 255, 20, 0.55);
+  box-shadow: 0 0 12px rgba(57,255,20,0.25);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  cursor: pointer;
+  transition: background 0.1s, box-shadow 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  user-select: none;
+}
+.mob-btn.pressed {
+  background: rgba(57, 255, 20, 0.28);
+  box-shadow: 0 0 24px #39FF14;
+  border-color: #39FF14;
+  color: #39FF14;
+}
+/* Кнопка прыжка — синяя */
+#mob-jump {
+  border-color: rgba(0,170,255,0.6);
+  box-shadow: 0 0 12px rgba(0,170,255,0.25);
+}
+#mob-jump.pressed {
+  background: rgba(0,170,255,0.28);
+  box-shadow: 0 0 24px #00aaff;
+  border-color: #00aaff;
+  color: #00aaff;
+}
+/* Кнопка перемотки — красная */
+#mob-rewind {
+  border-color: rgba(223,37,49,0.6);
+  box-shadow: 0 0 12px rgba(223,37,49,0.25);
+  font-size: 18px;
+}
+#mob-rewind.pressed {
+  background: rgba(223,37,49,0.28);
+  box-shadow: 0 0 24px #DF2531;
+  border-color: #DF2531;
+  color: #DF2531;
+}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEON FRACTURE - Enhanced Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ── Главный стартовый экран ── -->
+<div id="startScreen">
+    <h1>NEON FRACTURE</h1>
+    <div class="btn" id="startBtn">INITIALIZE</div>
+    <div class="btn" id="settingsStartBtn">⚙ SETTINGS</div>
+</div>
+
+<!-- ── Экран выбора платформы (появляется после INITIALIZE) ── -->
+<div id="platformScreen">
+    <div class="platform-card">
+        <div class="platform-title">SELECT PLATFORM</div>
+        <div class="platform-sub">Choose your control scheme</div>
+        <div class="platform-options">
+            <div class="platform-btn" id="pcBtn">
+                <div class="platform-icon">🖥</div>
+                <div class="platform-label">PC</div>
+                <div class="platform-hint">Keyboard + Mouse</div>
+            </div>
+            <div class="platform-btn" id="mobileBtn">
+                <div class="platform-icon">📱</div>
+                <div class="platform-label">MOBILE</div>
+                <div class="platform-hint">Touch Controls</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="introText"></div>
+<canvas id="game"></canvas>
+
+<!-- ── Пауза ── -->
+<div id="pauseMenu">
+    <div class="pause-card">
+        <h2>SYSTEM PAUSED</h2>
+        <button id="resumeBtn">▶ CONTINUE</button>
+        <button id="settingsBtn">⚙ SETTINGS</button>
+        <button id="restartBtn">⟳ RESTART</button>
+        <button id="mainMenuBtn">⌂ MAIN MENU</button>
+    </div>
+</div>
+
+<!-- ── Настройки ── -->
+<div id="settingsModal" style="display: none;">
+    <div class="settings-card">
+        <h3>AUDIO SETTINGS</h3>
+        <label>Music Volume</label>
+        <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1">
+        <label>SFX Volume</label>
+        <input type="range" id="sfxVolume" min="0" max="1" step="0.01" value="1">
+        <label>Mute All</label>
+        <input type="checkbox" id="muteCheckbox">
+        <button id="closeSettings">CLOSE</button>
+    </div>
+</div>
+
+<!-- ── Аудио ── -->
+<audio id="glitchSound" src="soundreality-glitch-master-140900.mp3"></audio>
+<audio id="gameMusic"   src="179_cyberpunk_city.mp3" loop></audio>
+<audio id="fallSound"   src="zvuk-padeniya-cheloveka.mp3"></audio>
+<audio id="stepSound"   src="6146059e6a880e7.mp3"></audio>
+<audio id="shootSound"  src="laser-shoot.wav"></audio>
+<audio id="deathSound"  src="explosion.wav"></audio>
+
+<script src="game.js"></script>
+</body>
+</html>
