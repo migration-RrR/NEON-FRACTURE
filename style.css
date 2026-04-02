@@ -22,21 +22,23 @@ html, body {
 /* ── Canvas wrapper — fills entire viewport ── */
 #game-wrapper {
   position: fixed;
-  inset: 0;                   /* top/right/bottom/left: 0 */
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   background: #000;
+  pointer-events: none;
+  z-index: 0;
 }
 
 canvas#game {
   display: block;
-  /* Canvas always fills the full window — game uses canvas.width/height */
   width: 100vw;
   height: 100vh;
   image-rendering: crisp-edges;
-  image-rendering: -webkit-optimize-contrast; /* Safari */
+  image-rendering: -webkit-optimize-contrast;
   touch-action: none;
+  pointer-events: none;
 }
 
 /* ── Start Screen ── */
