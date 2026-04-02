@@ -1325,7 +1325,7 @@ function showPlatformSelect() {
 function choosePlatform(chosen) {
   platform = chosen;
   platformScreen.style.display = "none";
-  // Включаем клики/касания на canvas — игра активна
+  // Canvas теперь принимает клики (стрельба мышью / тач)
   canvas.style.pointerEvents = "auto";
   // Запускаем интро
   startTime = performance.now();
