@@ -1,10 +1,9 @@
 /* ============================================================
    NEON FRACTURE — Responsive CSS
-   Canvas always fills the full viewport (fullscreen game).
-   Mobile buttons sit in safe corners and never cover the center.
+   Canvas is LAST in DOM — overlays sit above it naturally.
+   No z-index games needed for the start screen to be clickable.
    ============================================================ */
 
-/* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -14,44 +13,49 @@ html, body {
   font-family: 'Courier New', monospace;
   user-select: none;
   -webkit-user-select: none;
-  /* Prevents iOS rubber-band scroll and accidental zooming */
-  touch-action: none;
-  overscroll-behavior: none;
+  /* НЕ ставим touch-action: none на body — это блокирует клики на оверлеях.
+     touch-action ставим только на canvas. */
 }
 
-/* ── Canvas wrapper — fills entire viewport ── */
-#game-wrapper {
+/* ── Canvas — фиксирован на весь экран, самый нижний слой ── */
+canvas#game {
   position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #000;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  /* Блокируем жесты браузера только на canvas */
+  touch-action: none;
+  /* pointer-events: none по умолчанию — JS включает когда игра активна */
   pointer-events: none;
   z-index: 0;
 }
 
-canvas#game {
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  image-rendering: crisp-edges;
-  image-rendering: -webkit-optimize-contrast;
-  touch-action: none;
-  pointer-events: none;
+/* ── Все оверлеи — поверх canvas ── */
+#startScreen,
+#platformScreen,
+#introText,
+#pauseMenu,
+#settingsModal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  /* pointer-events: auto — они кликабельны */
+  pointer-events: auto;
 }
 
 /* ── Start Screen ── */
 #startScreen {
-  position: fixed;
-  inset: 0;
   background: radial-gradient(ellipse at center, #0d0d1a 0%, #000 100%);
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  z-index: 100;
+  z-index: 30;
 }
+
 #startScreen h1 {
   color: #39FF14;
   letter-spacing: clamp(4px, 2vw, 12px);
@@ -61,6 +65,7 @@ canvas#game {
   text-align: center;
   animation: titlePulse 2s infinite;
 }
+
 @keyframes titlePulse {
   0%   { text-shadow: 0 0 20px #39FF14; }
   50%  { text-shadow: 0 0 40px #39FF14, 0 0 60px #00aaff; }
@@ -91,30 +96,29 @@ canvas#game {
   transform: scale(1.05);
 }
 
-/* ── Platform Select Screen ── */
+/* ── Platform Select ── */
 #platformScreen {
-  position: fixed;
-  inset: 0;
   background: rgba(0, 0, 0, 0.93);
   backdrop-filter: blur(12px);
-  display: none;               /* shown by JS */
+  display: none;   /* показывается JS-ом */
   justify-content: center;
   align-items: center;
-  z-index: 150;
-  animation: fadeIn 0.3s ease;
+  z-index: 40;
   padding: 20px;
+  animation: fadeIn 0.3s ease;
 }
+
 .platform-card {
   background: #080812;
   border: 2px solid #00aaff;
   border-radius: 14px;
   padding: clamp(24px, 5vw, 48px) clamp(20px, 6vw, 56px);
   text-align: center;
-  box-shadow: 0 0 40px rgba(0,170,255,0.35),
-              inset 0 0 20px rgba(0,170,255,0.05);
+  box-shadow: 0 0 40px rgba(0,170,255,0.35), inset 0 0 20px rgba(0,170,255,0.05);
   max-width: 520px;
   width: 100%;
 }
+
 .platform-title {
   color: #00aaff;
   font-size: clamp(18px, 5vw, 28px);
@@ -122,18 +126,21 @@ canvas#game {
   margin-bottom: 8px;
   text-transform: uppercase;
 }
+
 .platform-sub {
-  color: #445;
+  color: #445566;
   font-size: clamp(11px, 2vw, 14px);
   letter-spacing: 2px;
   margin-bottom: clamp(24px, 4vh, 40px);
 }
+
 .platform-options {
   display: flex;
   gap: clamp(16px, 4vw, 32px);
   justify-content: center;
   flex-wrap: wrap;
 }
+
 .platform-btn {
   width: clamp(110px, 28vw, 150px);
   padding: clamp(16px, 3vh, 26px) 16px;
@@ -150,47 +157,54 @@ canvas#game {
   box-shadow: 0 0 28px #39FF14;
   transform: scale(1.06);
 }
+
 .platform-icon  { font-size: clamp(28px, 7vw, 44px); margin-bottom: 8px; }
-.platform-label { color: #39FF14; font-size: clamp(14px, 3.5vw, 18px); letter-spacing: 4px; font-weight: bold; margin-bottom: 5px; }
-.platform-hint  { color: #3a6a3a; font-size: clamp(10px, 2vw, 12px); letter-spacing: 1px; }
+.platform-label {
+  color: #39FF14;
+  font-size: clamp(14px, 3.5vw, 18px);
+  letter-spacing: 4px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+.platform-hint { color: #3a6a3a; font-size: clamp(10px, 2vw, 12px); letter-spacing: 1px; }
 
 /* ── Intro Text ── */
 #introText {
-  position: fixed;
-  width: 100%;
-  top: 45%;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   color: #39FF14;
   font-size: clamp(14px, 4vw, 22px);
   pointer-events: none;
   text-shadow: 0 0 10px #39FF14, 0 0 20px #00aaff;
   opacity: 0;
   transition: opacity 0.5s;
-  z-index: 90;
+  z-index: 20;
   padding: 0 20px;
+  text-align: center;
 }
+
 .glitch-text { animation: glitch-anim 2s infinite linear alternate-reverse; }
 @keyframes glitch-anim {
   0%   { transform: translate(0); opacity: 1; }
-  20%  { transform: translate(-2px, 2px); text-shadow: 2px 0 #DF2531, -2px 0 #00aaff; }
+  20%  { transform: translate(-2px,  2px); text-shadow: 2px 0 #DF2531, -2px 0 #00aaff; }
   40%  { transform: translate(-2px, -2px); }
-  60%  { transform: translate(2px, 2px); }
-  80%  { transform: translate(2px, -2px); }
+  60%  { transform: translate( 2px,  2px); }
+  80%  { transform: translate( 2px, -2px); }
   100% { transform: translate(0); }
 }
 
 /* ── Pause Menu ── */
 #pauseMenu {
-  position: fixed;
-  inset: 0;
   background: rgba(0, 0, 0, 0.86);
   backdrop-filter: blur(8px);
   display: none;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  z-index: 200;
+  z-index: 50;
 }
+
 .pause-card {
   background: #0c0c14;
   border: 2px solid #39FF14;
@@ -202,6 +216,7 @@ canvas#game {
   max-width: 340px;
   width: 90%;
 }
+
 .pause-card h2 {
   color: #39FF14;
   margin-bottom: clamp(16px, 3vh, 28px);
@@ -209,6 +224,7 @@ canvas#game {
   text-transform: uppercase;
   font-size: clamp(18px, 5vw, 26px);
 }
+
 .pause-card button {
   display: block;
   width: min(200px, 80%);
@@ -226,7 +242,8 @@ canvas#game {
   -webkit-tap-highlight-color: transparent;
 }
 .pause-card button:hover, .pause-card button:active {
-  background: #39FF14; color: #000;
+  background: #39FF14;
+  color: #000;
   box-shadow: 0 0 14px #39FF14;
   transform: scale(1.03);
 }
@@ -238,15 +255,14 @@ canvas#game {
 
 /* ── Settings Modal ── */
 #settingsModal {
-  position: fixed;
-  inset: 0;
   background: rgba(0, 0, 0, 0.92);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 300;
+  z-index: 60;
   padding: 20px;
 }
+
 .settings-card {
   background: #0c0c14;
   border: 2px solid #39FF14;
@@ -256,6 +272,7 @@ canvas#game {
   text-align: center;
   box-shadow: 0 0 28px #39FF14;
 }
+
 .settings-card h3    { color: #39FF14; margin-bottom: 4px; font-size: clamp(14px, 3.5vw, 18px); }
 .settings-card label { color: #39FF14; display: block; margin: clamp(10px, 2vh, 16px) 0 4px; font-size: clamp(12px, 2.5vw, 14px); }
 .settings-card input[type="range"] {
@@ -264,7 +281,8 @@ canvas#game {
   accent-color: #39FF14; border-radius: 4px;
 }
 .settings-card input[type="checkbox"] {
-  accent-color: #39FF14; width: 18px; height: 18px; cursor: pointer; vertical-align: middle;
+  accent-color: #39FF14; width: 18px; height: 18px;
+  cursor: pointer; vertical-align: middle;
 }
 .settings-card button {
   margin-top: clamp(14px, 2.5vh, 22px);
@@ -277,20 +295,9 @@ canvas#game {
 
 /* ============================================================
    MOBILE VIRTUAL BUTTONS
-   Layout (portrait phone, ~375px wide):
-
-   LEFT SIDE (bottom-left)          RIGHT SIDE (bottom-right)
-   ┌──────────────────────────────────────────────────────────┐
-   │                   GAME AREA                              │
-   │                                                          │
-   │  [◀] [▶]                           [⏎ RWD]  [▲ JUMP]   │
-   └──────────────────────────────────────────────────────────┘
-
-   Buttons are fixed to viewport corners via CSS bottom/left/right.
-   No JS positioning — pure CSS so they stay correct on rotation.
+   ◀ ▶ — bottom-left    ⏎ ▲ — bottom-right
+   Pure CSS positioning via fixed + safe-area insets.
    ============================================================ */
-
-/* Base token — one size fits all screens via clamp */
 :root {
   --mob-size: clamp(60px, 13vw, 88px);
   --mob-gap:  clamp(10px,  3vw, 20px);
@@ -309,18 +316,17 @@ canvas#game {
   font-size: calc(var(--mob-size) * 0.38);
   font-weight: bold;
   color: rgba(255,255,255,0.65);
-  background: rgba(0, 0, 0, 0.42);
-  border: 2px solid rgba(57, 255, 20, 0.50);
-  box-shadow: 0 0 10px rgba(57,255,20,0.20);
+  background: rgba(0, 0, 0, 0.45);
+  border: 2px solid rgba(57, 255, 20, 0.55);
+  box-shadow: 0 0 10px rgba(57,255,20,0.2);
   backdrop-filter: blur(5px);
-  z-index: 500;
+  z-index: 70;
   cursor: pointer;
   transition: background 0.1s, box-shadow 0.1s, border-color 0.1s;
   -webkit-tap-highlight-color: transparent;
   touch-action: none;
   user-select: none;
-  /* Safe area insets for notch phones */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  pointer-events: auto;
 }
 .mob-btn.pressed {
   background: rgba(57, 255, 20, 0.25);
@@ -329,7 +335,7 @@ canvas#game {
   color: #39FF14;
 }
 
-/* Move: bottom-left cluster */
+/* Left cluster — bottom-left */
 #mob-left {
   bottom: calc(var(--mob-edge) + env(safe-area-inset-bottom, 0px));
   left:   var(--mob-edge);
@@ -339,12 +345,12 @@ canvas#game {
   left:   calc(var(--mob-edge) + var(--mob-size) + var(--mob-gap));
 }
 
-/* Action: bottom-right cluster */
+/* Right cluster — bottom-right */
 #mob-jump {
   bottom: calc(var(--mob-edge) + env(safe-area-inset-bottom, 0px));
   right:  var(--mob-edge);
   border-color: rgba(0,170,255,0.55);
-  box-shadow:   0 0 10px rgba(0,170,255,0.20);
+  box-shadow:   0 0 10px rgba(0,170,255,0.2);
 }
 #mob-jump.pressed {
   background:   rgba(0,170,255,0.25);
@@ -357,7 +363,7 @@ canvas#game {
   bottom: calc(var(--mob-edge) + env(safe-area-inset-bottom, 0px));
   right:  calc(var(--mob-edge) + var(--mob-size) + var(--mob-gap));
   border-color: rgba(223,37,49,0.55);
-  box-shadow:   0 0 10px rgba(223,37,49,0.20);
+  box-shadow:   0 0 10px rgba(223,37,49,0.2);
   font-size: calc(var(--mob-size) * 0.30);
 }
 #mob-rewind.pressed {
@@ -367,11 +373,11 @@ canvas#game {
   color: #DF2531;
 }
 
-/* ── Landscape adjustments for phones ── */
+/* Landscape на маленьких экранах — уменьшаем кнопки */
 @media screen and (orientation: landscape) and (max-height: 500px) {
   :root {
-    --mob-size: clamp(48px, 9vh, 68px);
-    --mob-gap:  clamp(6px,  2vw, 14px);
-    --mob-edge: clamp(6px,  2vw, 14px);
+    --mob-size: clamp(46px, 9vh, 64px);
+    --mob-gap:  clamp(6px, 2vw, 12px);
+    --mob-edge: clamp(6px, 2vw, 12px);
   }
 }
