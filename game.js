@@ -1287,6 +1287,8 @@ function restartGame() {
   hpShakeTimer = 0; hpFlashTimer = 0;
   keys = {};
   mobileLeft = false; mobileRight = false; mobileJump = false; mobileRewind = false;
+  // Отключаем клики на canvas — вернулись в меню
+  canvas.style.pointerEvents = "none";
   // Сброс платформы — снова покажем экран выбора
   platform = null;
   cleanupMobileControls();
@@ -1323,6 +1325,8 @@ function showPlatformSelect() {
 function choosePlatform(chosen) {
   platform = chosen;
   platformScreen.style.display = "none";
+  // Включаем клики/касания на canvas — игра активна
+  canvas.style.pointerEvents = "auto";
   // Запускаем интро
   startTime = performance.now();
   initRooftops();
