@@ -357,96 +357,211 @@ function drawClouds() {
   ctx.restore();
 }
 
+
 // =========================================================
-// ЗДАНИЯ (фон)
+// ЗДАНИЯ (фон) — пиксельный киберпанк стиль
 // =========================================================
+const SIGN_TEXTS  = ["GAME","5050","LIVE","666","KAIROS","NEO","BAR","HOTEL",
+                     "CYBER","RAMEN","GUA","PRO","HAPPY","NEON","HACK","GLI7CH"];
+const SIGN_COLORS = ["#39FF14","#00aaff","#ff44cc","#ffcc00","#ff4444","#00ffcc","#ff8800"];
+
 const cityLayers = [
-  { speed:0.07, c1:"#04041a", c2:"#08082a", hMin:1200, hMax:1900, wMin:260, wMax:530, gap:8 },
-  { speed:0.27, c1:"#080820", c2:"#0e0e2e", hMin: 800, hMax:1350, wMin:230, wMax:470, gap:6 },
-  { speed:0.54, c1:"#0e0e28", c2:"#161636", hMin: 580, hMax:1060, wMin:185, wMax:410, gap:5 }
+  { speed:0.06, c1:"#03091a", c2:"#060d22", hMin:1300, hMax:2000, wMin:280, wMax:560, gap:4 },
+  { speed:0.22, c1:"#060d22", c2:"#0b152e", hMin: 850, hMax:1400, wMin:220, wMax:480, gap:4 },
+  { speed:0.50, c1:"#0b152e", c2:"#121a38", hMin: 580, hMax:1050, wMin:180, wMax:400, gap:4 }
 ];
+
 const buildings = cityLayers.map(layer => {
-  const arr = []; let cx = -1500;
-  for (let i = 0; i < 140; i++) {
+  const arr = []; let cx = -1600;
+  for (let i = 0; i < 150; i++) {
     const w = layer.wMin + Math.random() * (layer.wMax - layer.wMin);
+    const numSigns = Math.floor(Math.random() * 3);
+    const signs = [];
+    for (let s = 0; s < numSigns; s++) {
+      signs.push({
+        text:       SIGN_TEXTS[Math.floor(Math.random() * SIGN_TEXTS.length)],
+        color:      SIGN_COLORS[Math.floor(Math.random() * SIGN_COLORS.length)],
+        rx:         0.05 + Math.random() * 0.65,
+        ry:         0.15 + Math.random() * 0.55,
+        sw:         30 + Math.random() * 55,
+        sh:         10 + Math.random() * 18,
+        blink:      Math.random() * Math.PI * 2,
+        blinkSpeed: 0.001 + Math.random() * 0.003,
+        vertical:   Math.random() > 0.72
+      });
+    }
     arr.push({
       x: cx, w,
       h:         layer.hMin + Math.random() * (layer.hMax - layer.hMin),
-      accent:    Math.random() > 0.5 ? "#39FF14" : "#00aaff",
-      hasSpire:  Math.random() > 0.35,
-      winSeed:   Math.random() * 2000
+      roofType:  Math.floor(Math.random() * 3),
+      roofW:     w * (0.3 + Math.random() * 0.5),
+      roofH:     20 + Math.random() * 60,
+      hasSpire:  Math.random() > 0.4,
+      spireH:    40 + Math.random() * 80,
+      accentTop: SIGN_COLORS[Math.floor(Math.random() * SIGN_COLORS.length)],
+      winColor:  Math.random() > 0.5 ? "#00aaff" : "#00ccff",
+      winSeed:   Math.random() * 3000,
+      signs
     });
     cx += w + layer.gap;
   }
   return arr;
 });
 
+// Пиксельный прямоугольник (без субпикселей)
+function px(x, y, w, h) {
+  ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(w), Math.ceil(h));
+}
+
 function drawBuildings() {
   const gY = canvas.height - 80;
   const now = Date.now();
+
   cityLayers.forEach((layer, li) => {
     buildings[li].forEach(b => {
-      const bx = b.x - cameraX * layer.speed;
-      if (bx + b.w < -10 || bx > canvas.width + 10) return;
-      const g = ctx.createLinearGradient(bx, gY - b.h, bx, gY);
-      g.addColorStop(0, layer.c1); g.addColorStop(1, layer.c2);
-      ctx.fillStyle = g;
-      ctx.fillRect(bx, gY - b.h, b.w, b.h);
-      // Мерцающие окна
-      for (let wy = gY - b.h + 22; wy < gY - 18; wy += 35) {
-        for (let wx = bx + 9; wx < bx + b.w - 9; wx += 28) {
-          const on = Math.sin(now * 0.004 + wx * 0.09 + b.winSeed) > 0.05;
-          if (!on) continue;
-          const wa = 0.1 + Math.abs(Math.sin(now * 0.003 + wy * 0.05 + b.winSeed)) * 0.2;
-          ctx.fillStyle = Math.random() > 0.65 ? `rgba(0,170,255,${wa})` : `rgba(57,255,20,${wa})`;
-          ctx.fillRect(wx, wy, 10, 14);
+      const bx = Math.floor(b.x - cameraX * layer.speed);
+      const bw = Math.ceil(b.w);
+      const by = Math.floor(gY - b.h);
+      if (bx + bw < -20 || bx > canvas.width + 20) return;
+
+      // Тело здания
+      ctx.fillStyle = layer.c1;
+      px(bx, by, bw, b.h);
+
+      // Вертикальные структурные полосы
+      ctx.fillStyle = layer.c2;
+      for (let sx = bx + 12; sx < bx + bw - 8; sx += 18) px(sx, by, 2, b.h);
+
+      // Окна (пиксельная сетка)
+      const wStep = 18, wH = 10, wW = 12;
+      for (let wy = by + 20; wy < gY - 16; wy += wStep + 4) {
+        for (let wx = bx + 8; wx < bx + bw - 10; wx += wW + 6) {
+          const seed = Math.sin(now * 0.003 + wx * 0.07 + wy * 0.11 + b.winSeed);
+          if (seed < -0.3) continue;
+          const bright = 0.12 + Math.abs(seed) * 0.3;
+          const wIdx = Math.floor((wx + wy + b.winSeed) % 4);
+          const wc = ["rgba(0,180,255,","rgba(160,210,255,","rgba(0,255,180,","rgba(255,210,90,"][wIdx];
+          ctx.fillStyle = wc + bright + ")";
+          px(wx, wy, wW, wH);
+          ctx.fillStyle = "rgba(255,255,255,0.05)";
+          px(wx, wy, wW, 2);
         }
       }
-      // Шпиль и неоновый верх
-      ctx.shadowBlur = 12; ctx.shadowColor = b.accent;
-      ctx.fillStyle  = b.accent;
-      ctx.fillRect(bx, gY - b.h, b.w, 3);
-      if (b.hasSpire) {
-        ctx.fillRect(bx + b.w / 2 - 2, gY - b.h - 62, 4, 62);
-        const blink = Math.abs(Math.sin(now * 0.0022 + b.x * 0.001));
-        ctx.fillStyle = `rgba(255,55,55,${blink})`;
-        ctx.beginPath(); ctx.arc(bx + b.w / 2, gY - b.h - 64, 3, 0, Math.PI * 2); ctx.fill();
-      }
+
+      // Неоновые вывески
+      b.signs.forEach(sg => {
+        sg.blink += sg.blinkSpeed;
+        const alpha = 0.65 + Math.sin(sg.blink) * 0.35;
+        const sx = bx + sg.rx * bw;
+        const sy = by + sg.ry * b.h;
+        ctx.shadowBlur = 8; ctx.shadowColor = sg.color;
+        if (sg.vertical) {
+          ctx.fillStyle = "rgba(0,0,0,0.8)"; px(sx, sy, sg.sh * 0.7, sg.sw);
+          ctx.fillStyle = sg.color; ctx.globalAlpha = alpha * 0.85;
+          px(sx + 2, sy + 2, sg.sh * 0.7 - 4, sg.sw - 4);
+          ctx.globalAlpha = 1;
+        } else {
+          ctx.fillStyle = "rgba(0,0,12,0.85)"; px(sx, sy, sg.sw, sg.sh);
+          ctx.fillStyle = sg.color; ctx.globalAlpha = alpha;
+          px(sx + 2, sy + 2, sg.sw - 4, sg.sh - 4);
+          ctx.globalAlpha = 1;
+          if (li === 2 && sg.sw > 38) {
+            ctx.fillStyle = "#000"; ctx.shadowBlur = 0;
+            ctx.font = `bold ${Math.floor(sg.sh * 0.65)}px monospace`;
+            ctx.textBaseline = "middle";
+            ctx.fillText(sg.text, sx + 4, sy + sg.sh / 2);
+          }
+        }
+        ctx.shadowBlur = 0;
+      });
+
+      // Верхняя неоновая линия
+      ctx.shadowBlur = 6; ctx.shadowColor = b.accentTop;
+      ctx.fillStyle  = b.accentTop;
+      px(bx, by, bw, 2);
       ctx.shadowBlur = 0;
+
+      // Надстройка / башенка
+      if (b.roofType === 1) {
+        const rw = Math.ceil(b.roofW), rx = bx + Math.floor((bw - rw) / 2);
+        ctx.fillStyle = layer.c1; px(rx, by - b.roofH, rw, b.roofH);
+        ctx.shadowBlur = 5; ctx.shadowColor = b.accentTop;
+        ctx.fillStyle  = b.accentTop; px(rx, by - b.roofH, rw, 2);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = b.winColor; ctx.globalAlpha = 0.45;
+        for (let tw = rx + 4; tw < rx + rw - 10; tw += 14) px(tw, by - b.roofH + 6, 8, 10);
+        ctx.globalAlpha = 1;
+      } else if (b.roofType === 2) {
+        const rw = Math.ceil(b.roofW * 0.55), rx = bx + Math.floor((bw - rw) / 2);
+        ctx.fillStyle = layer.c2; px(rx, by - b.roofH, rw, b.roofH);
+        ctx.shadowBlur = 5; ctx.shadowColor = b.accentTop;
+        ctx.fillStyle  = b.accentTop; px(rx, by - b.roofH, rw, 2);
+        ctx.shadowBlur = 0;
+        const sW = Math.floor(rw / 4);
+        ctx.globalAlpha = 0.55; ctx.fillStyle = b.winColor;
+        for (let ts = 0; ts < 3; ts++) px(rx + 4 + ts * sW, by - b.roofH + 8, sW - 3, b.roofH - 16);
+        ctx.globalAlpha = 1;
+      }
+
+      // Шпиль
+      if (b.hasSpire) {
+        const spx = bx + Math.floor(bw / 2);
+        const spy = by - (b.roofType > 0 ? b.roofH : 0);
+        ctx.fillStyle = "#4a5060"; px(spx - 1, spy - b.spireH, 2, b.spireH);
+        ctx.fillStyle = "#606878";
+        px(spx - 7, spy - b.spireH * 0.6, 14, 2);
+        px(spx - 4, spy - b.spireH * 0.35, 8, 2);
+        const bl = Math.abs(Math.sin(now * 0.0025 + b.x * 0.0015));
+        ctx.shadowBlur = 10; ctx.shadowColor = "#ff3333";
+        ctx.fillStyle  = `rgba(255,50,50,${0.4 + bl * 0.6})`;
+        ctx.beginPath(); ctx.arc(spx, spy - b.spireH - 2, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+      }
     });
   });
 }
 
 // =========================================================
-// КРЫШИ
+// КРЫШИ — пиксельный стиль
 // =========================================================
 let rooftops = [];
 const RT_GEN  = 950;
-const RT_MINW = 230, RT_MAXW = 450;
-const RT_MING = 10,  RT_MAXG = 28;
+const RT_MINW = 230, RT_MAXW = 460;
+const RT_MING = 10,  RT_MAXG = 30;
 const RT_MINH = 175, RT_MAXH = 265;
+
+const ROOF_SIGNS = ["KAIROS","NEO-7","SECTOR","CORP","DATA","5050","GEN-X","UNIT","NEXUS","FLUX"];
 
 function generateRooftop(x) {
   const w  = RT_MINW + Math.random() * (RT_MAXW - RT_MINW);
   const sh = RT_MINH + Math.random() * (RT_MAXH - RT_MINH);
   return {
     x, y: canvas.height - sh, width: w, height: sh,
-    slope:       Math.random() > 0.62 ? 5 + Math.random() * 10 : 0,
-    hasRail:     Math.random() > 0.42,
-    railColor:   Math.random() > 0.5 ? "#39FF14" : "#00aaff",
-    hasAntenna:  Math.random() > 0.62,
-    hasChimney:  Math.random() > 0.73,
-    hasVent:     Math.random() > 0.68,
-    hasTank:     Math.random() > 0.82,
-    accentColor: Math.random() > 0.5 ? "#39FF14" : "#00aaff",
-    winSeed:     Math.random() * 1500
+    accentColor: SIGN_COLORS[Math.floor(Math.random() * SIGN_COLORS.length)],
+    railColor:   Math.random() > 0.5 ? "#00aaff" : "#39FF14",
+    hasRail:     Math.random() > 0.35,
+    hasAntenna:  Math.random() > 0.55,
+    hasChimney:  Math.random() > 0.65,
+    hasVent:     Math.random() > 0.60,
+    hasTank:     Math.random() > 0.75,
+    hasSign:     Math.random() > 0.48,
+    signText:    ROOF_SIGNS[Math.floor(Math.random() * ROOF_SIGNS.length)],
+    signColor:   SIGN_COLORS[Math.floor(Math.random() * SIGN_COLORS.length)],
+    hasHelipad:  Math.random() > 0.88,
+    winSeed:     Math.random() * 2000,
+    blocks: Array.from({ length: Math.floor(Math.random() * 3) }, () => ({
+      rx: Math.random() * 0.6,
+      rw: 0.1 + Math.random() * 0.25,
+      rh: 10 + Math.random() * 30,
+      color: Math.random() > 0.5 ? "#131825" : "#0d1220"
+    }))
   };
 }
 
 function initRooftops() {
   rooftops = [];
   let sx = 0;
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 30; i++) {
     const rt = generateRooftop(sx);
     rooftops.push(rt);
     sx += rt.width + RT_MING + Math.random() * (RT_MAXG - RT_MING);
@@ -468,105 +583,134 @@ function updateRooftops() {
 function drawRooftops() {
   const now = Date.now();
   for (const rt of rooftops) {
-    const x = rt.x - cameraX, y = rt.y, w = rt.width, h = rt.height;
+    const x = Math.floor(rt.x - cameraX);
+    const y = Math.floor(rt.y);
+    const w = Math.ceil(rt.width);
+    const h = Math.ceil(rt.height);
 
-    // Тело
-    const bg = ctx.createLinearGradient(x, y, x, y + h);
-    bg.addColorStop(0, "#1a1a28"); bg.addColorStop(1, "#09090f");
-    ctx.fillStyle = bg;
-    ctx.fillRect(x, y, w, h);
+    // Тело крыши
+    ctx.fillStyle = "#0d1220"; px(x, y, w, h);
+    ctx.fillStyle = "#111828";
+    for (let fx = x + 14; fx < x + w - 8; fx += 20) px(fx, y, 2, h);
 
-    // Скат
-    if (rt.slope > 0) {
-      ctx.beginPath();
-      ctx.moveTo(x, y); ctx.lineTo(x + w, y - rt.slope); ctx.lineTo(x + w, y);
-      ctx.closePath();
-      ctx.fillStyle = "#212130"; ctx.fill();
+    // Окна фасада
+    const wg = 0.25 + Math.sin(now * 0.004 + rt.winSeed) * 0.12;
+    for (let i = 0; i < 8; i++) {
+      const wx = x + 10 + i * 36;
+      if (wx + 16 > x + w - 8) break;
+      for (let row = 0; row < 2; row++) {
+        const wy = y + 14 + row * 20;
+        const wc = (i + row) % 3 === 0 ? `rgba(0,200,255,${wg})`
+                 : (i + row) % 3 === 1 ? `rgba(57,255,20,${wg * 0.7})`
+                 :                        `rgba(255,200,80,${wg * 0.5})`;
+        ctx.fillStyle = wc; px(wx, wy, 14, 8);
+        ctx.fillStyle = "rgba(255,255,255,0.07)"; px(wx, wy, 14, 2);
+      }
     }
 
-    // Горизонтальные панели (текстура)
-    ctx.fillStyle = "rgba(255,255,255,0.018)";
-    for (let py = y + 8; py < y + h; py += 20) ctx.fillRect(x, py, w, 1);
-
-    // Неоновый верхний край
-    ctx.shadowBlur = 11; ctx.shadowColor = rt.accentColor;
-    ctx.fillStyle  = rt.accentColor;
-    ctx.fillRect(x, y, w, 3);
+    // Верхний неоновый край
+    ctx.shadowBlur = 12; ctx.shadowColor = rt.accentColor;
+    ctx.fillStyle  = rt.accentColor; px(x, y, w, 3);
     ctx.shadowBlur = 0;
 
-    // Боковые полосы
-    ctx.fillStyle = "rgba(0,170,255,0.12)";
-    ctx.fillRect(x, y, 2, h); ctx.fillRect(x + w - 2, y, 2, h);
+    // Структурные блоки (уступы)
+    rt.blocks.forEach(bl => {
+      const bx2 = x + Math.floor(bl.rx * w), bw2 = Math.ceil(bl.rw * w);
+      ctx.fillStyle = bl.color; px(bx2, y - bl.rh, bw2, bl.rh);
+      ctx.fillStyle = "rgba(0,160,255,0.15)"; px(bx2, y - bl.rh, bw2, 2);
+    });
 
     // Парапет
     if (rt.hasRail) {
-      ctx.fillStyle = "#262636";
-      ctx.fillRect(x, y - 9, w, 9);
-      ctx.shadowBlur = 5; ctx.shadowColor = rt.railColor;
-      ctx.fillStyle  = rt.railColor;
-      ctx.fillRect(x, y - 9, w, 2);
+      ctx.fillStyle = "#1a2035"; px(x, y - 10, w, 10);
+      ctx.shadowBlur = 6; ctx.shadowColor = rt.railColor;
+      ctx.fillStyle  = rt.railColor; px(x, y - 10, w, 2);
       ctx.shadowBlur = 0;
-      ctx.fillStyle  = "#3a3a50";
-      for (let px = x + 14; px < x + w - 8; px += 38) ctx.fillRect(px, y - 9, 3, 9);
+      ctx.fillStyle  = "#2a3050";
+      for (let rx2 = x + 12; rx2 < x + w - 8; rx2 += 32) px(rx2, y - 10, 3, 10);
     }
 
     // Антенна
     if (rt.hasAntenna) {
-      const ax = x + w * 0.56;
-      ctx.fillStyle = "#909090";
-      ctx.fillRect(ax - 1, y - 32, 2, 32);
-      ctx.fillRect(ax - 8, y - 23, 16, 2);
-      ctx.fillRect(ax - 6, y - 16, 12, 2);
+      const ax = x + Math.floor(w * 0.62);
+      const ay = y - (rt.hasRail ? 10 : 0);
+      ctx.fillStyle = "#607080";
+      px(ax, ay - 36, 2, 36); px(ax - 9, ay - 26, 18, 2);
+      px(ax - 6, ay - 18, 12, 2); px(ax - 4, ay - 11, 8, 2);
       const blink = Math.abs(Math.sin(now * 0.003 + rt.x * 0.002));
-      ctx.shadowBlur = 12; ctx.shadowColor = "#ff4444";
-      ctx.fillStyle  = `rgba(255,60,60,${0.15 + blink * 0.85})`;
-      ctx.beginPath(); ctx.arc(ax, y - 33, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 10; ctx.shadowColor = "#ff3333";
+      ctx.fillStyle  = `rgba(255,50,50,${0.3 + blink * 0.7})`;
+      ctx.beginPath(); ctx.arc(ax + 1, ay - 38, 3, 0, Math.PI * 2); ctx.fill();
       ctx.shadowBlur = 0;
     }
 
-    // Вентиляция
+    // Вентблок
     if (rt.hasVent) {
-      const vx = x + w * 0.24;
-      ctx.fillStyle = "#2e2e44"; ctx.fillRect(vx, y - 14, 20, 15);
-      ctx.fillStyle = "#404058"; ctx.fillRect(vx - 2, y - 15, 24, 4);
-      // Пар
-      ctx.save();
-      ctx.globalAlpha = 0.12 + Math.sin(now * 0.005) * 0.04;
-      ctx.fillStyle   = "#aac8ff";
-      ctx.beginPath(); ctx.ellipse(vx + 10, y - 20, 12, 7, 0, 0, Math.PI * 2); ctx.fill();
+      const vx = x + Math.floor(w * 0.22);
+      const vy = y - (rt.hasRail ? 10 : 0);
+      ctx.fillStyle = "#151e30"; px(vx, vy - 18, 28, 18);
+      ctx.fillStyle = "#1e2840"; px(vx - 3, vy - 20, 34, 5);
+      ctx.fillStyle = "#0a1020";
+      px(vx + 2, vy - 15, 6, 12); px(vx + 11, vy - 15, 6, 12); px(vx + 20, vy - 15, 6, 12);
+      ctx.shadowBlur = 5; ctx.shadowColor = "#00aaff";
+      ctx.fillStyle  = "#00aaff"; px(vx + 8, vy - 22, 4, 3);
+      ctx.shadowBlur = 0;
+      ctx.save(); ctx.globalAlpha = 0.09 + Math.sin(now * 0.006 + rt.x) * 0.04;
+      ctx.fillStyle = "#8ab8ff";
+      ctx.beginPath(); ctx.ellipse(vx + 14, vy - 28, 14, 8, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     }
 
     // Труба
     if (rt.hasChimney) {
-      const ch = x + w - 42;
-      ctx.fillStyle = "#5a3a28"; ctx.fillRect(ch, y - 24, 14, 27);
-      ctx.fillStyle = "#3e281a"; ctx.fillRect(ch - 2, y - 26, 18, 4);
+      const ch = x + Math.floor(w * 0.78), cy2 = y - (rt.hasRail ? 10 : 0);
+      ctx.fillStyle = "#1a1a28"; px(ch, cy2 - 28, 16, 28);
+      ctx.fillStyle = "#252538"; px(ch - 3, cy2 - 30, 22, 5);
     }
 
     // Водяной бак
     if (rt.hasTank) {
-      const tx = x + w * 0.34;
-      ctx.fillStyle = "#252535"; ctx.fillRect(tx, y - 22, 24, 23);
-      ctx.fillStyle = "#181820"; ctx.fillRect(tx + 2, y - 10, 20, 11);
-      ctx.fillStyle = "#555";
-      ctx.fillRect(tx, y, 4, 6); ctx.fillRect(tx + 20, y, 4, 6);
+      const tx = x + Math.floor(w * 0.40), ty = y - (rt.hasRail ? 10 : 0);
+      ctx.fillStyle = "#303048"; px(tx, ty - 4, 4, 8); px(tx + 22, ty - 4, 4, 8);
+      ctx.fillStyle = "#1e243a"; px(tx - 2, ty - 24, 30, 22);
+      ctx.fillStyle = "#141a2e"; px(tx + 2, ty - 20, 22, 14);
+      ctx.fillStyle = "rgba(0,150,255,0.2)"; px(tx - 2, ty - 24, 30, 4);
     }
 
-    // Окна на фасаде
-    const wg = 0.22 + Math.sin(now * 0.005 + rt.winSeed) * 0.12;
-    for (let i = 0; i < 6; i++) {
-      const wx = x + 14 + i * 42;
-      if (wx + 14 > x + w - 8) break;
-      ctx.fillStyle = `rgba(0,170,255,${wg * 0.65})`;
-      ctx.fillRect(wx, y + 10, 14, 11);
-      ctx.fillStyle = `rgba(57,255,20,${wg})`;
-      ctx.fillRect(wx + 2, y + 11, 10, 9);
+    // Неоновая вывеска на крыше
+    if (rt.hasSign) {
+      const sw2  = 58 + Math.floor(w * 0.15), sh2 = 16;
+      const sx2  = x + Math.floor((w - sw2) / 2);
+      const sy2  = y - (rt.hasRail ? 10 : 0) - (rt.hasVent ? 22 : 4) - sh2;
+      const bl   = 0.72 + Math.sin(now * 0.004 + rt.x * 0.003) * 0.28;
+      ctx.fillStyle = "rgba(0,0,0,0.88)"; px(sx2 - 2, sy2 - 2, sw2 + 4, sh2 + 4);
+      ctx.shadowBlur = 14; ctx.shadowColor = rt.signColor;
+      ctx.fillStyle  = rt.signColor; ctx.globalAlpha = bl;
+      px(sx2, sy2, sw2, 2); px(sx2, sy2 + sh2 - 2, sw2, 2);
+      px(sx2, sy2, 2, sh2); px(sx2 + sw2 - 2, sy2, 2, sh2);
+      ctx.shadowBlur = 8;
+      ctx.font = `bold ${sh2 - 4}px monospace`;
+      ctx.textBaseline = "middle";
+      ctx.fillText(rt.signText, sx2 + 6, sy2 + sh2 / 2);
+      ctx.globalAlpha = 1; ctx.shadowBlur = 0;
     }
 
-    // Нижняя синяя полоска
-    ctx.fillStyle = "rgba(0,170,255,0.28)";
-    ctx.fillRect(x, y + h - 2, w, 2);
+    // Вертолётная площадка
+    if (rt.hasHelipad) {
+      const hx = x + Math.floor(w * 0.5), hy = y - (rt.hasRail ? 10 : 0) - 4;
+      ctx.strokeStyle = "#ffcc00"; ctx.lineWidth = 2;
+      ctx.shadowBlur = 6; ctx.shadowColor = "#ffcc00";
+      ctx.beginPath(); ctx.arc(hx, hy, 18, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = "rgba(255,200,0,0.12)";
+      ctx.beginPath(); ctx.arc(hx, hy, 18, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffcc00"; ctx.font = "bold 13px monospace";
+      ctx.textBaseline = "middle"; ctx.textAlign = "center";
+      ctx.fillText("H", hx, hy);
+      ctx.textAlign = "left"; ctx.shadowBlur = 0; ctx.lineWidth = 1;
+    }
+
+    // Основание
+    ctx.fillStyle = "rgba(0,80,160,0.18)"; px(x, y + h - 3, w, 3);
   }
 }
 
@@ -1161,12 +1305,20 @@ function applyGlitch() {
 // МИР
 // =========================================================
 function drawWorld() {
+  // Небо — глубокое синее/бирюзовое как на референсах
   const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  sky.addColorStop(0,    "#01010e");
-  sky.addColorStop(0.45, "#020212");
-  sky.addColorStop(0.75, "#060616");
-  sky.addColorStop(1,    "#000000");
+  sky.addColorStop(0,    "#020818");
+  sky.addColorStop(0.30, "#041228");
+  sky.addColorStop(0.60, "#071a35");
+  sky.addColorStop(0.85, "#061530");
+  sky.addColorStop(1,    "#020a18");
   ctx.fillStyle = sky; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Бирюзовое свечение горизонта
+  const haze = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height * 0.82);
+  haze.addColorStop(0, "rgba(0,60,120,0)");
+  haze.addColorStop(1, "rgba(0,80,160,0.13)");
+  ctx.fillStyle = haze; ctx.fillRect(0, canvas.height * 0.5, canvas.width, canvas.height * 0.32);
 
   drawStars();
   drawClouds();
@@ -1178,18 +1330,18 @@ function drawWorld() {
   // Земля
   const gY = canvas.height - 80;
   const gg = ctx.createLinearGradient(0, gY, 0, canvas.height);
-  gg.addColorStop(0, "#040410"); gg.addColorStop(1, "#00000a");
+  gg.addColorStop(0, "#030810"); gg.addColorStop(1, "#010408");
   ctx.fillStyle = gg; ctx.fillRect(0, gY, canvas.width, 80);
 
-  ctx.shadowBlur = 22; ctx.shadowColor = "#39FF14";
-  ctx.fillStyle  = "#39FF14"; ctx.fillRect(0, gY, canvas.width, 3);
-  ctx.shadowColor = "#00aaff";
-  ctx.fillStyle   = "#00aaff"; ctx.fillRect(0, gY + 7, canvas.width, 2);
-  // Отражение
-  ctx.shadowBlur = 0;
+  ctx.shadowBlur = 18; ctx.shadowColor = "#00aaff";
+  ctx.fillStyle  = "#00aaff"; ctx.fillRect(0, gY, canvas.width, 2);
+  ctx.shadowColor = "#39FF14";
+  ctx.fillStyle   = "#39FF14"; ctx.fillRect(0, gY + 5, canvas.width, 1);
+  ctx.shadowBlur  = 0;
   ctx.save();
-  ctx.globalAlpha = 0.07 + Math.sin(Date.now() * 0.002) * 0.02;
-  ctx.fillStyle   = "#39FF14"; ctx.fillRect(0, gY + 14, canvas.width, 1);
+  ctx.globalAlpha = 0.06 + Math.sin(Date.now() * 0.002) * 0.02;
+  ctx.fillStyle   = "#00aaff"; ctx.fillRect(0, gY + 10, canvas.width, 1);
+  ctx.fillStyle   = "#39FF14"; ctx.fillRect(0, gY + 18, canvas.width, 1);
   ctx.restore();
 }
 
